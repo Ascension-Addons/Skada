@@ -55,14 +55,16 @@ end
 -------------------------------------------------------------------------------
 
 do
-	function tLength(tbl)
-		local len = 0
-		if tbl then
-			for _ in pairs(tbl) do
-				len = len + 1
+	if not tLength then
+		function tLength(tbl)
+			local len = 0
+			if tbl then
+				for _ in pairs(tbl) do
+					len = len + 1
+				end
 			end
+			return len
 		end
-		return len
 	end
 
 	-- copies a table from another
@@ -253,12 +255,16 @@ do
 	local UnitHealth, UnitHealthMax = UnitHealth, UnitHealthMax
 	local UnitPower, UnitPowerMax = UnitPower, UnitPowerMax
 
-	function IsInRaid()
-		return (GetNumRaidMembers() > 0)
+	if not IsInRaid then
+		function IsInRaid()
+			return (GetNumRaidMembers() > 0)
+		end
 	end
 
-	function IsInGroup()
-		return (GetNumRaidMembers() > 0 or GetNumPartyMembers() > 0)
+	if not IsInGroup then
+		function IsInGroup()
+			return (GetNumRaidMembers() > 0 or GetNumPartyMembers() > 0)
+		end
 	end
 
 	local function GetNumGroupMembers()
@@ -376,45 +382,47 @@ do
 
 	local MAX_BOSS_FRAMES = MAX_BOSS_FRAMES or 5
 
-	function GetUnitIdFromGUID(guid, filter)
-		if filter == nil or filter == "boss" then
-			for i = 1, MAX_BOSS_FRAMES do
-				if UnitExists("boss" .. i) and UnitGUID("boss" .. i) == guid then
-					return "boss" .. i
+	if not GetUnitIdFromGUID then
+		function GetUnitIdFromGUID(guid, filter)
+			if filter == nil or filter == "boss" then
+				for i = 1, MAX_BOSS_FRAMES do
+					if UnitExists("boss" .. i) and UnitGUID("boss" .. i) == guid then
+						return "boss" .. i
+					end
 				end
+				if filter == "boss" then return end
 			end
-			if filter == "boss" then return end
-		end
 
-		if filter == nil or filter == "group" then
-			for unit in UnitIterator() do
-				if UnitGUID(unit) == guid then
-					return unit
-				elseif UnitExists(unit .. "target") and UnitGUID(unit .. "target") == guid then
-					return unit .. "target"
+			if filter == nil or filter == "group" then
+				for unit in UnitIterator() do
+					if UnitGUID(unit) == guid then
+						return unit
+					elseif UnitExists(unit .. "target") and UnitGUID(unit .. "target") == guid then
+						return unit .. "target"
+					end
 				end
+				if filter == "group" then return end
 			end
-			if filter == "group" then return end
-		end
 
-		if filter == nil or filter == "player" then
-			if UnitExists("target") and UnitGUID("target") == guid then
-				return "target"
-			elseif UnitExists("focus") and UnitGUID("focus") == guid then
-				return "focus"
-			elseif UnitExists("targettarget") and UnitGUID("targettarget") == guid then
-				return "targettarget"
-			elseif UnitExists("focustarget") and UnitGUID("focustarget") == guid then
-				return "focustarget"
-			elseif UnitExists("mouseover") and UnitGUID("mouseover") == guid then
-				return "mouseover"
-			elseif filter == "player" then return end
-		end
+			if filter == nil or filter == "player" then
+				if UnitExists("target") and UnitGUID("target") == guid then
+					return "target"
+				elseif UnitExists("focus") and UnitGUID("focus") == guid then
+					return "focus"
+				elseif UnitExists("targettarget") and UnitGUID("targettarget") == guid then
+					return "targettarget"
+				elseif UnitExists("focustarget") and UnitGUID("focustarget") == guid then
+					return "focustarget"
+				elseif UnitExists("mouseover") and UnitGUID("mouseover") == guid then
+					return "mouseover"
+				elseif filter == "player" then return end
+			end
 
-		if filter == "arena" then
-			for i = 1, 5 do
-				if UnitExists("arena" .. i) and UnitGUID("arena" .. i) == guid then
-					return "arena" .. i
+			if filter == "arena" then
+				for i = 1, 5 do
+					if UnitExists("arena" .. i) and UnitGUID("arena" .. i) == guid then
+						return "arena" .. i
+					end
 				end
 			end
 		end
@@ -532,8 +540,8 @@ do
 	local classColorsTable, classCoordsTable
 
 	-- flags for Projects Ascension
-	lib.Ascension = (type(IsCoA) == "function")
-	lib.AscensionCoA = lib.Ascension and IsCoA()
+	lib.Ascension = (type(C_Realm) == "function")
+	lib.AscensionCoA = lib.Ascension and C_Realm:IsConquestOfAzeroth()
 
 	local function GetClassColorsTable()
 		-- fill class colors table.
