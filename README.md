@@ -1,3 +1,3 @@
-# Addon Name
+# Skada
 
-This is the repository for <Addon Name>. Modified for Ascension.gg. 
+This is the repository for Skada. Modified for Ascension.gg. 
