@@ -156,98 +156,97 @@ function Skada:RegisterClasses()
 	end
 
 	-- customize class colors
-	if not self.Ascension or not self.AscensionCoA then
-		local disabled = function()
-			return not self.db.profile.usecustomcolors
-		end
+	local disabled = function()
+		return not self.db.profile.usecustomcolors
+	end
 
-		local colorsOpt = {
-			type = "group",
-			name = L["Colors"],
-			desc = format(L["Options for %s."], L["Colors"]),
-			order = 1000,
-			get = function(i)
-				local color = self.classcolors[i[#i]]
-				if self.db.profile.customcolors and self.db.profile.customcolors[i[#i]] then
-					color = self.db.profile.customcolors[i[#i]]
+	local colorsOpt = {
+		type = "group",
+		name = L["Colors"],
+		desc = format(L["Options for %s."], L["Colors"]),
+		order = 1000,
+		get = function(i)
+			local color = self.classcolors[i[#i]]
+			if self.db.profile.customcolors and self.db.profile.customcolors[i[#i]] then
+				color = self.db.profile.customcolors[i[#i]]
+			end
+			return color.r, color.g, color.b
+		end,
+		set = function(i, r, g, b)
+			local class = i[#i]
+			self.db.profile.customcolors = self.db.profile.customcolors or {}
+			self.db.profile.customcolors[class] = self.db.profile.customcolors[class] or {}
+			self.db.profile.customcolors[class].r = r
+			self.db.profile.customcolors[class].g = g
+			self.db.profile.customcolors[class].b = b
+			self.db.profile.customcolors[class].colorStr = self.RGBPercToHex(r, g, b, true)
+		end,
+		args = {
+			enable = {
+				type = "toggle",
+				name = L["Enable"],
+				width = "double",
+				order = 10,
+				get = function()
+					return self.db.profile.usecustomcolors
+				end,
+				set = function(_, val)
+					if val then
+						self.db.profile.usecustomcolors = true
+					else
+						self.db.profile.usecustomcolors = nil
+						self.db.profile.customcolors = nil -- free it
+					end
 				end
-				return color.r, color.g, color.b
-			end,
-			set = function(i, r, g, b)
-				local class = i[#i]
-				self.db.profile.customcolors = self.db.profile.customcolors or {}
-				self.db.profile.customcolors[class] = self.db.profile.customcolors[class] or {}
-				self.db.profile.customcolors[class].r = r
-				self.db.profile.customcolors[class].g = g
-				self.db.profile.customcolors[class].b = b
-				self.db.profile.customcolors[class].colorStr = self.RGBPercToHex(r, g, b, true)
-			end,
-			args = {
-				enable = {
-					type = "toggle",
-					name = L["Enable"],
-					width = "double",
-					order = 10,
-					get = function()
-						return self.db.profile.usecustomcolors
-					end,
-					set = function(_, val)
-						if val then
-							self.db.profile.usecustomcolors = true
-						else
-							self.db.profile.usecustomcolors = nil
-							self.db.profile.customcolors = nil -- free it
-						end
-					end
-				},
-				class = {
-					type = "group",
-					name = L["Class Colors"],
-					order = 20,
-					hidden = disabled,
-					disabled = disabled,
-					args = {}
-				},
-				custom = {
-					type = "group",
-					name = L["Custom Colors"],
-					order = 30,
-					hidden = disabled,
-					disabled = disabled,
-					args = {}
-				},
-				reset = {
-					type = "execute",
-					name = L["Reset"],
-					width = "double",
-					order = 90,
-					disabled = disabled,
-					confirm = function() return L["Are you sure you want to reset all colors?"] end,
-					func = function()
-						self.db.profile.customcolors = wipe(self.db.profile.customcolors or {})
-					end
-				}
+			},
+			class = {
+				type = "group",
+				name = L["Class Colors"],
+				order = 20,
+				hidden = disabled,
+				disabled = disabled,
+				args = {}
+			},
+			custom = {
+				type = "group",
+				name = L["Custom Colors"],
+				order = 30,
+				hidden = disabled,
+				disabled = disabled,
+				args = {}
+			},
+			reset = {
+				type = "execute",
+				name = L["Reset"],
+				width = "double",
+				order = 90,
+				disabled = disabled,
+				confirm = function() return L["Are you sure you want to reset all colors?"] end,
+				func = function()
+					self.db.profile.customcolors = wipe(self.db.profile.customcolors or {})
+				end
 			}
 		}
+	}
 
-		for class, data in pairs(self.classcolors) do
-			if self.validclass[class] then
-				colorsOpt.args.class.args[class] = {
-					type = "color",
-					name = L[class],
-					desc = format(L["Color for %s."], L[class])
-				}
-			else
-				colorsOpt.args.custom.args[class] = {
-					type = "color",
-					name = L[class],
-					desc = format(L["Color for %s."], L[class])
-				}
-			end
+	for class, data in pairs(self.classcolors) do
+		if self.validclass[class] then
+			colorsOpt.args.class.args[class] = {
+				type = "color",
+				name = L[class],
+				desc = format(L["Color for %s."], L[class])
+			}
+		else
+			colorsOpt.args.custom.args[class] = {
+				type = "color",
+				name = L[class],
+				desc = format(L["Color for %s."], L[class])
+			}
 		end
-
-		self.options.args.tweaks.args.advanced.args.colors = colorsOpt
 	end
+
+	self.options.args.tweaks.args.advanced.args.colors = colorsOpt
+	
 end
 
 function Skada:RegisterSchools()

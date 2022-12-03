@@ -540,7 +540,7 @@ do
 	local classColorsTable, classCoordsTable
 
 	-- flags for Projects Ascension
-	lib.Ascension = (type(C_Realm) == "table")
+	lib.Ascension = AtlasInfo ~= nil
 	lib.AscensionCoA = lib.Ascension and C_Realm:IsConquestOfAzeroth()
 
 	local function GetClassColorsTable()
