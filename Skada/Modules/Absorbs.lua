@@ -27,216 +27,110 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 	local UnitIsDeadOrGhost, UnitHealthInfo = UnitIsDeadOrGhost, Skada.UnitHealthInfo
 	local IsActiveBattlefieldArena, UnitInBattleground = IsActiveBattlefieldArena, UnitInBattleground
 	local GetTime, band, tsort = GetTime, bit.band, table.sort
+	local IsAbsorbSpell, GetSpellBaseDuration = IsAbsorbSpell, GetSpellBaseDuration
 	local T = Skada.Table
 
-	-- INCOMPLETE
-	-- the following list is incomplete due to the lack of testing for different
-	-- shield ranks. Feel free to provide any helpful data possible to complete it.
-	-- Note: some of the caps are used as backup because their amounts are calculated later.
-	local absorbspells = {
-		[48707] = {dur = 5}, -- Anti-Magic Shell (rank 1)
-		[51052] = {dur = 10}, -- Anti-Magic Zone( (rank 1)
-		[50150] = {dur = 86400}, -- Will of the Necropolis
-		[49497] = {dur = 86400}, -- Spell Deflection
-		[62606] = {dur = 10, avg = 1600, cap = 2500}, -- Savage Defense
-		[11426] = {dur = 60}, -- Ice Barrier (rank 1)
-		[13031] = {dur = 60}, -- Ice Barrier (rank 2)
-		[13032] = {dur = 60}, -- Ice Barrier (rank 3)
-		[13033] = {dur = 60}, -- Ice Barrier (rank 4)
-		[27134] = {dur = 60}, -- Ice Barrier (rank 5)
-		[33405] = {dur = 60}, -- Ice Barrier (rank 6)
-		[43038] = {dur = 60}, -- Ice Barrier (rank 7)
-		[43039] = {dur = 60, avg = 6500, cap = 8300}, -- Ice Barrier (rank 8)
-		[6143] = {dur = 30}, -- Frost Ward (rank 1)
-		[8461] = {dur = 30}, -- Frost Ward (rank 2)
-		[8462] = {dur = 30}, -- Frost Ward (rank 3)
-		[10177] = {dur = 30}, -- Frost Ward (rank 4)
-		[28609] = {dur = 30}, -- Frost Ward (rank 5)
-		[32796] = {dur = 30}, -- Frost Ward (rank 6)
-		[43012] = {dur = 30, avg = 5200, cap = 7000}, -- Frost Ward (rank 7)
-		[1463] = {dur = 60}, -- Mana shield (rank 1)
-		[8494] = {dur = 60}, -- Mana shield (rank 2)
-		[8495] = {dur = 60}, -- Mana shield (rank 3)
-		[10191] = {dur = 60}, -- Mana shield (rank 4)
-		[10192] = {dur = 60}, -- Mana shield (rank 5)
-		[10193] = {dur = 60}, -- Mana shield (rank 6)
-		[27131] = {dur = 60}, -- Mana shield (rank 7)
-		[43019] = {dur = 60}, -- Mana shield (rank 8)
-		[43020] = {dur = 60, avg = 4500, cap = 6300}, -- Mana shield (rank 9)
-		[543] = {dur = 30}, -- Fire Ward (rank 1)
-		[8457] = {dur = 30}, -- Fire Ward (rank 2)
-		[8458] = {dur = 30}, -- Fire Ward (rank 3)
-		[10223] = {dur = 30}, -- Fire Ward (rank 4)
-		[10225] = {dur = 30}, -- Fire Ward (rank 5)
-		[27128] = {dur = 30}, -- Fire Ward (rank 6)
-		[43010] = {dur = 30, avg = 5200, cap = 7000}, -- Fire Ward (rank 7)
-		[58597] = {dur = 6, avg = 4400, cap = 6000}, -- Sacred Shield
-		[66233] = {dur = 86400}, -- Ardent Defender
-		[31230] = {dur = 86400}, -- Cheat Death
-		[17] = {dur = 30}, -- Power Word: Shield (rank 1)
-		[592] = {dur = 30}, -- Power Word: Shield (rank 2)
-		[600] = {dur = 30}, -- Power Word: Shield (rank 3)
-		[3747] = {dur = 30}, -- Power Word: Shield (rank 4)
-		[6065] = {dur = 30}, -- Power Word: Shield (rank 5)
-		[6066] = {dur = 30}, -- Power Word: Shield (rank 6)
-		[10898] = {dur = 30, avg = 721, cap = 848}, -- Power Word: Shield (rank 7)
-		[10899] = {dur = 30, avg = 898, cap = 1057}, -- Power Word: Shield (rank 8)
-		[10900] = {dur = 30, avg = 1543, cap = 1816}, -- Power Word: Shield (rank 9)
-		[10901] = {dur = 30, avg = 3643, cap = 4288}, -- Power Word: Shield (rank 10)
-		[25217] = {dur = 30, avg = 5436, cap = 6398}, -- Power Word: Shield (rank 11)
-		[25218] = {dur = 30, avg = 7175, cap = 8444}, -- Power Word: Shield (rank 12)
-		[48065] = {dur = 30, avg = 9596, cap = 11293}, -- Power Word: Shield (rank 13)
-		[48066] = {dur = 30, avg = 10000, cap = 11769}, -- Power Word: Shield (rank 14)
-		[47509] = {dur = 12}, -- Divine Aegis (rank 1)
-		[47511] = {dur = 12}, -- Divine Aegis (rank 2)
-		[47515] = {dur = 12}, -- Divine Aegis (rank 3)
-		[47753] = {dur = 12, cap = 10000}, -- Divine Aegis (rank 1)
-		[54704] = {dur = 12, cap = 10000}, -- Divine Aegis (rank 1)
-		[47788] = {dur = 10}, -- Guardian Spirit
-		[7812] = {dur = 30}, -- Sacrifice (rank 1)
-		[19438] = {dur = 30}, -- Sacrifice (rank 2)
-		[19440] = {dur = 30}, -- Sacrifice (rank 3)
-		[19441] = {dur = 30}, -- Sacrifice (rank 4)
-		[19442] = {dur = 30}, -- Sacrifice (rank 5)
-		[19443] = {dur = 30}, -- Sacrifice (rank 6)
-		[27273] = {dur = 30}, -- Sacrifice (rank 7)
-		[47985] = {dur = 30}, -- Sacrifice (rank 8)
-		[47986] = {dur = 30}, -- Sacrifice (rank 9)
-		[6229] = {dur = 30}, -- Shadow Ward (rank 1)
-		[11739] = {dur = 30}, -- Shadow Ward (rank 1)
-		[11740] = {dur = 30}, -- Shadow Ward (rank 2)
-		[28610] = {dur = 30}, -- Shadow Ward (rank 3)
-		[47890] = {dur = 30}, -- Shadow Ward (rank 4)
-		[47891] = {dur = 30, avg = 6500, cap = 8300}, -- Shadow Ward (rank 5)
-		[29674] = {dur = 86400, cap = 1000}, -- Lesser Ward of Shielding
-		[29719] = {dur = 86400, cap = 4000}, -- Greater Ward of Shielding
-		[29701] = {dur = 86400, cap = 4000}, -- Greater Shielding
-		[28538] = {dur = 120, avg = 3400, cap = 4000}, -- Major Holy Protection Potion
-		[28537] = {dur = 120, avg = 3400, cap = 4000}, -- Major Shadow Protection Potion
-		[28536] = {dur = 120, avg = 3400, cap = 4000}, -- Major Arcane Protection Potion
-		[28513] = {dur = 120, avg = 3400, cap = 4000}, -- Major Nature Protection Potion
-		[28512] = {dur = 120, avg = 3400, cap = 4000}, -- Major Frost Protection Potion
-		[28511] = {dur = 120, avg = 3400, cap = 4000}, -- Major Fire Protection Potion
-		[7233] = {dur = 120, avg = 1300, cap = 1625}, -- Fire Protection Potion
-		[7239] = {dur = 120, avg = 1800, cap = 2250}, -- Frost Protection Potion
-		[7242] = {dur = 120, avg = 1800, cap = 2250}, -- Shadow Protection Potion
-		[7245] = {dur = 120, avg = 1800, cap = 2250}, -- Holy Protection Potion
-		[7254] = {dur = 120, avg = 1800, cap = 2250}, -- Nature Protection Potion
-		[53915] = {dur = 120, avg = 5100, cap = 6000}, -- Mighty Shadow Protection Potion
-		[53914] = {dur = 120, avg = 5100, cap = 6000}, -- Mighty Nature Protection Potion
-		[53913] = {dur = 120, avg = 5100, cap = 6000}, -- Mighty Frost Protection Potion
-		[53911] = {dur = 120, avg = 5100, cap = 6000}, -- Mighty Fire Protection Potion
-		[53910] = {dur = 120, avg = 5100, cap = 6000}, -- Mighty Arcane Protection Potion
-		[17548] = {dur = 120, avg = 2600, cap = 3250}, -- Greater Shadow Protection Potion
-		[17546] = {dur = 120, avg = 2600, cap = 3250}, -- Greater Nature Protection Potion
-		[17545] = {dur = 120, avg = 2600, cap = 3250}, -- Greater Holy Protection Potion
-		[17544] = {dur = 120, avg = 2600, cap = 3250}, -- Greater Frost Protection Potion
-		[17543] = {dur = 120, avg = 2600, cap = 3250}, -- Greater Fire Protection Potion
-		[17549] = {dur = 120, avg = 2600, cap = 3250}, -- Greater Arcane Protection Potion
-		[28527] = {dur = 15, avg = 1000, cap = 1250}, -- Fel Blossom
-		[29432] = {dur = 3600, avg = 2000, cap = 2500}, -- Frozen Rune
-		[36481] = {dur = 4, cap = 100000}, -- Arcane Barrier (TK Kael'Thas) Shield
-		[57350] = {dur = 6, cap = 1500}, -- Darkmoon Card: Illusion
-		[17252] = {dur = 1800, cap = 500}, -- Mark of the Dragon Lord (LBRS epic ring)
-		[25750] = {dur = 15, avg = 151, cap = 302}, -- Defiler's Talisman/Talisman of Arathor
-		[25747] = {dur = 15, avg = 344, cap = 378}, -- Defiler's Talisman/Talisman of Arathor
-		[25746] = {dur = 15, avg = 435, cap = 478}, -- Defiler's Talisman/Talisman of Arathor
-		[23991] = {dur = 15, avg = 550, cap = 605}, -- Defiler's Talisman/Talisman of Arathor
-		[31000] = {dur = 300, avg = 1800, cap = 2700}, -- Pendant of Shadow's End Usage
-		[30997] = {dur = 300, avg = 1800, cap = 2700}, -- Pendant of Frozen Flame Usage
-		[31002] = {dur = 300, avg = 1800, cap = 2700}, -- Pendant of the Null Rune
-		[30999] = {dur = 300, avg = 1800, cap = 2700}, -- Pendant of Withering
-		[30994] = {dur = 300, avg = 1800, cap = 2700}, -- Pendant of Thawing
-		[31000] = {dur = 300, avg = 1800, cap = 2700}, -- Pendant of Shadow's End
-		[23506] = {dur = 20, avg = 1000, cap = 1250}, -- Arena Grand Master
-		[12561] = {dur = 60, avg = 400, cap = 500}, -- Goblin Construction Helmet
-		[31771] = {dur = 20, cap = 440}, -- Runed Fungalcap
-		[21956] = {dur = 10, cap = 500}, -- Mark of Resolution
-		[29506] = {dur = 20, cap = 900}, -- The Burrower's Shell
-		[4057] = {dur = 60, cap = 500}, -- Flame Deflector
-		[4077] = {dur = 60, cap = 600}, -- Ice Deflector
-		[39228] = {dur = 20, cap = 1150}, -- Argussian Compass (may not be an actual absorb)
-		[27779] = {dur = 30, cap = 350}, -- Divine Protection (Priest dungeon set 1/2)
-		[11657] = {dur = 20, avg = 70, cap = 85}, -- Jang'thraze (Zul Farrak)
-		[10368] = {dur = 15, cap = 200}, -- Uther's Light Effect
-		[37515] = {dur = 15, cap = 200}, -- Blade Turning
-		[42137] = {dur = 86400, cap = 400}, -- Greater Rune of Warding
-		[26467] = {dur = 30, cap = 1000}, -- Scarab Brooch
-		[26470] = {dur = 8, cap = 1000}, -- Persistent Shield
-		[27539] = {dur = 6, avg = 300, cap = 500}, -- Thick Obsidian Breatplate
-		[28810] = {dur = 30, cap = 500}, -- Faith Set Proc Armor of Faith
-		[55019] = {dur = 12, cap = 1100}, -- Sonic Shield
-		[64413] = {dur = 8, cap = 20000}, -- Val'anyr, Hammer of Ancient Kings Protection of Ancient Kings
-		[40322] = {dur = 30, avg = 12000, cap = 12600}, -- Teron's Vengeful Spirit Ghost - Spirit Shield
-		[71586] = {dur = 10, cap = 6400}, -- Hardened Skin (Corroded Skeleton Key)
-		[60218] = {dur = 10, avg = 140, cap = 4000}, -- Essence of Gossamer
-		[57350] = {dur = 6, cap = 1500}, -- Illusionary Barrier (Darkmoon Card: Illusion)
-		[70845] = {dur = 10}, -- Stoicism
-		[65874] = {dur = 15, cap = 175000}, -- Twin Val'kyr's: Shield of Darkness
-		[67257] = {dur = 15, cap = 300000}, -- Twin Val'kyr's: Shield of Darkness
-		[67256] = {dur = 15, cap = 700000}, -- Twin Val'kyr's: Shield of Darkness
-		[67258] = {dur = 15, cap = 1200000}, -- Twin Val'kyr's: Shield of Darkness
-		[65858] = {dur = 15, cap = 175000}, -- Twin Val'kyr's: Shield of Lights
-		[67260] = {dur = 15, cap = 300000}, -- Twin Val'kyr's: Shield of Lights
-		[67259] = {dur = 15, cap = 700000}, -- Twin Val'kyr's: Shield of Lights
-		[67261] = {dur = 15, cap = 1200000}, -- Twin Val'kyr's: Shield of Lights
-		[65686] = {dur = 86400, cap = 1000000}, -- Twin Val'kyr: Light Essence
-		[65684] = {dur = 86400, cap = 1000000} -- Twin Val'kyr: Dark Essence86400
+	-- This is filled by IsAbsorbSpell in HandleShield now
+	local absorbspells = {}
+
+	local mage_ward = { -- Fire Ward / Frost Ward
+		[543] = true, -- [Fire Ward, rank 1 enUS] -- classless
+		[8457] = true, -- [Fire Ward, rank 2 enUS] -- classless
+		[8458] = true, -- [Fire Ward, rank 3 enUS] -- classless
+		[10223] = true, -- [Fire Ward, rank 4 enUS] -- classless
+		[10225] = true, -- [Fire Ward, rank 5 enUS] -- classless
+		[27128] = true, -- [Fire Ward, rank 6 enUS] -- classless
+		[43010] = true, -- [Fire Ward, rank 7 enUS] -- classless
+		[1100543] = true, -- [Fire Ward, rank 1 enUS] -- mage
+		[1108457] = true, -- [Fire Ward, rank 2 enUS] -- mage
+		[1108458] = true, -- [Fire Ward, rank 3 enUS] -- mage
+		[1110223] = true, -- [Fire Ward, rank 4 enUS] -- mage
+		[1110225] = true, -- [Fire Ward, rank 5 enUS] -- mage
+		[1127128] = true, -- [Fire Ward, rank 6 enUS] -- mage
+		[1143010] = true, -- [Fire Ward, rank 7 enUS] -- mage
+		[6143] = true, -- [Frost Ward, rank 1 enUS] -- classless
+		[8461] = true, -- [Frost Ward, rank 2 enUS] -- classless
+		[8462] = true, -- [Frost Ward, rank 3 enUS] -- classless
+		[10177] = true, -- [Frost Ward, rank 4 enUS] -- classless
+		[28609] = true, -- [Frost Ward, rank 5 enUS] -- classless
+		[32796] = true, -- [Frost Ward, rank 6 enUS] -- classless
+		[43012] = true, -- [Frost Ward, rank 7 enUS] -- classless
+		[1106143] = true, -- [Frost Ward, rank 1 enUS] -- classless
+		[1108461] = true, -- [Frost Ward, rank 2 enUS] -- classless
+		[1108462] = true, -- [Frost Ward, rank 3 enUS] -- classless
+		[1110177] = true, -- [Frost Ward, rank 4 enUS] -- classless
+		[1128609] = true, -- [Frost Ward, rank 5 enUS] -- classless
+		[1132796] = true, -- [Frost Ward, rank 6 enUS] -- classless
+		[1143012] = true, -- [Frost Ward, rank 7 enUS] -- classless
+	}
+
+	local warlock_shadow_ward = { -- Shadow Ward
+		[6229] = true, -- [Shadow Ward, rank 1 enUS] -- classless
+		[11739] = true, -- [Shadow Ward, rank 2 enUS] -- classless
+		[11740] = true, -- [Shadow Ward, rank 3 enUS] -- classless
+		[28610] = true, -- [Shadow Ward, rank 4 enUS] -- classless
+		[47890] = true, -- [Shadow Ward, rank 5 enUS] -- classless
+		[47891] = true, -- [Shadow Ward, rank 6 enUS] -- classless
+		[1106229] = true, -- [Shadow Ward, rank 1 enUS] -- warlock
+		[1111739] = true, -- [Shadow Ward, rank 1 enUS] -- warlock
+		[1111740] = true, -- [Shadow Ward, rank 1 enUS] -- warlock
+		[1128610] = true, -- [Shadow Ward, rank 1 enUS] -- warlock
+		[1147890] = true, -- [Shadow Ward, rank 1 enUS] -- warlock
+		[1147891] = true, -- [Shadow Ward, rank 1 enUS] -- warlock
+	}
+
+	local mage_ice_barrier = {
+		[11426] = true,  -- [Ice Barrier, rank 1 enUS] -- classless
+		[13031] = true,  -- [Ice Barrier, rank 2 enUS] -- classless
+		[13032] = true,  -- [Ice Barrier, rank 3 enUS] -- classless
+		[13033] = true,  -- [Ice Barrier, rank 4 enUS] -- classless
+		[27134] = true,  -- [Ice Barrier, rank 5 enUS] -- classless
+		[33245] = true,  -- [Ice Barrier, rank 1 enUS] -- classless
+		[33405] = true,  -- [Ice Barrier, rank 6 enUS] -- classless
+		[43038] = true,  -- [Ice Barrier, rank 7 enUS] -- classless
+		[43039] = true,  -- [Ice Barrier, rank 8 enUS] -- classless
+		[1111426] = true, -- [Ice Barrier, rank 1 enUS] -- mage
+		[1113031] = true, -- [Ice Barrier, rank 2 enUS] -- mage
+		[1113032] = true, -- [Ice Barrier, rank 3 enUS] -- mage
+		[1113033] = true, -- [Ice Barrier, rank 4 enUS] -- mage
+		[1127134] = true, -- [Ice Barrier, rank 5 enUS] -- mage
+		[1133405] = true, -- [Ice Barrier, rank 6 enUS] -- mage
+		[1143038] = true, -- [Ice Barrier, rank 7 enUS] -- mage
+		[1143039] = true, -- [Ice Barrier, rank 8 enUS] -- mage
+	}
+
+	local warlock_sacrifice = { -- Sacrifice
+		[7812] = true, -- [Sacrifice, rank 1 enUS] -- classless
+		[19438] = true, -- [Sacrifice, rank 2 enUS] -- classless
+		[19440] = true, -- [Sacrifice, rank 3 enUS] -- classless
+		[19441] = true, -- [Sacrifice, rank 4 enUS] -- classless
+		[19442] = true, -- [Sacrifice, rank 5 enUS] -- classless
+		[19443] = true, -- [Sacrifice, rank 6 enUS] -- classless
+		[27273] = true, -- [Sacrifice, rank 7 enUS] -- classless
+		[47985] = true, -- [Sacrifice, rank 8 enUS] -- classless
+		[47986] = true, -- [Sacrifice, rank 9 enUS] -- classless
+		[1107812] = true, -- [Sacrifice, rank 1 enUS] -- warlock
+		[1119438] = true, -- [Sacrifice, rank 2 enUS] -- warlock
+		[1119440] = true, -- [Sacrifice, rank 3 enUS] -- warlock
+		[1119441] = true, -- [Sacrifice, rank 4 enUS] -- warlock
+		[1119442] = true, -- [Sacrifice, rank 5 enUS] -- warlock
+		[1119443] = true, -- [Sacrifice, rank 6 enUS] -- warlock
+		[1127273] = true, -- [Sacrifice, rank 7 enUS] -- warlock
+		[1147985] = true, -- [Sacrifice, rank 8 enUS] -- warlock
+		[1147986] = true, -- [Sacrifice, rank 9 enUS] -- warlock
 	}
 
 	local priest_divine_aegis = { -- Divine Aegis
-		[47509] = true,
-		[47511] = true,
-		[47515] = true,
-		[47753] = true,
-		[54704] = true
-	}
-	local mage_frost_ward = { -- Frost Ward
-		[6143] = true,
-		[8461] = true,
-		[8462] = true,
-		[10177] = true,
-		[28609] = true,
-		[32796] = true,
-		[43012] = true
-	}
-	local mage_fire_ward = { -- Fire Ward
-		[543] = true,
-		[8457] = true,
-		[8458] = true,
-		[10223] = true,
-		[10225] = true,
-		[27128] = true,
-		[43010] = true
-	}
-	local mage_ice_barrier = { -- Ice Barrier
-		[11426] = true,
-		[13031] = true,
-		[13032] = true,
-		[13033] = true,
-		[27134] = true,
-		[33405] = true,
-		[43038] = true,
-		[43039] = true
-	}
-	local warlock_shadow_ward = { -- Shadow Ward
-		[6229] = true,
-		[11739] = true,
-		[11740] = true,
-		[28610] = true,
-		[47890] = true,
-		[47891] = true
-	}
-	local warlock_sacrifice = { -- Sacrifice
-		[7812] = true,
-		[19438] = true,
-		[19440] = true,
-		[19441] = true,
-		[19442] = true,
-		[19443] = true,
-		[27273] = true,
-		[47985] = true,
-		[47986] = true
+		[47509] = true, -- [Divine Aegis, rank 1 enUS] -- classless
+		[47511] = true, -- [Divine Aegis, rank 2 enUS] -- classless
+		[47515] = true, -- [Divine Aegis, rank 3 enUS] -- classless
+		[47753] = true, -- [Divine Aegis, rank 4 enUS] -- classless
+		[54704] = true, -- [Divine Aegis, rank 5 enUS] -- classless
+		[157509] = true, -- [Divine Aegis, rank 1 enUS] -- priest
+		[157511] = true, -- [Divine Aegis, rank 2 enUS] -- priest
+		[157515] = true, -- [Divine Aegis, rank 3 enUS] -- priest
+		[157753] = true, -- [Divine Aegis, rank 4 enUS] -- priest
+		[164704] = true, -- [Divine Aegis, rank 5 enUS] -- priest
 	}
 
 	-- spells iof which we don't record casts.
@@ -320,7 +214,7 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 		end
 	end
 
-	-- https://github.com/TrinityCore/TrinityCore/blob/5d82995951c2be99b99b7b78fa12505952e86af7/src/server/game/Spells/Auras/SpellAuraEffects.h#L316
+	-- Taken from Ascension core AbsorbAuraOrderPred
 	-- Note: this order is reversed
 	local function SortShields(a, b)
 		local a_spellid, b_spellid = a.spellid, b.spellid
@@ -343,27 +237,11 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 			return true
 		end
 
-		-- Frost Ward
-		if mage_frost_ward[a_spellid] then
+		-- Wards
+		if warlock_shadow_ward[a_spellid] or mage_ward[a_spellid] then
 			return false
 		end
-		if mage_frost_ward[b_spellid] then
-			return true
-		end
-
-		-- Fire Ward
-		if mage_fire_ward[a_spellid] then
-			return false
-		end
-		if mage_fire_ward[b_spellid] then
-			return true
-		end
-
-		-- Shadow Ward
-		if warlock_shadow_ward[a_spellid] then
-			return false
-		end
-		if warlock_shadow_ward[b_spellid] then
+		if warlock_shadow_ward[b_spellid] or mage_ward[b_spellid] then
 			return true
 		end
 
@@ -384,10 +262,18 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 		end
 
 		-- Divine Aegis
-		if priest_divine_aegis[a_spellid] then
+		if a_spellid == 47753 then
 			return false
 		end
-		if priest_divine_aegis[b_spellid] then
+		if b_spellid == 47753 then
+			return true
+		end
+
+		-- Disciple Aegis
+		if a_spellid == 847753 then
+			return false
+		end
+		if b_spellid == 847753 then
 			return true
 		end
 
@@ -407,35 +293,19 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 			return true
 		end
 
-		-- Anti-Magic Shell
-		if a_spellid == 48707 then
+		-- Dominant Word: Shield
+		if a_spellid == 881472 then
 			return false
 		end
-		if b_spellid == 48707 then
+		if b_spellid == 881472 then
 			return true
 		end
 
-		-- Will of the Necropolis
-		if a_spellid == 50150 then
+		-- Armor of Faith - Shield
+		if a_spellid == 84380 then
 			return false
 		end
-		if b_spellid == 50150 then
-			return true
-		end
-
-		-- Ardent Defender
-		if a_spellid == 66233 then
-			return false
-		end
-		if b_spellid == 66233 then
-			return true
-		end
-
-		-- Hardened Skin (Corroded Skeleton Key)
-		if a_spellid == 71586 then
-			return false
-		end
-		if b_spellid == 71586 then
+		if b_spellid == 84380 then
 			return true
 		end
 
@@ -444,7 +314,13 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 
 	local function HandleShield(timestamp, eventtype, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, ...)
 		local spellid = ...
-		if not spellid or not absorbspells[spellid] or not dstName or ignoredSpells[spellid] then return end
+
+		if not spellid or not dstName or ignoredSpells[spellid] then return end
+
+		if not absorbspells[spellid] and IsAbsorbSpell(spellid) then
+			absorbspells[spellid] = { dur = GetSpellBaseDuration(spellID) or 18 }
+			return
+		end
 
 		shields = shields or T.get("Skada_Shields") -- create table if missing
 
@@ -488,7 +364,7 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 				amount = min(20000, amount + (heals[dstName][srcName].amount * 0.15))
 			end
 		elseif (spellid == 48707 or spellid == 51052) and UnitHealthMax(dstName) then -- Anti-Magic Shell/Zone
-			amount = UnitHealthMax(dstName) * 0.5
+			amount = UnitHealthMax(dstName) * 0.75
 		elseif spellid == 70845 and UnitHealthMax(dstName) then -- Stoicism
 			amount = UnitHealthMax(dstName) * 0.2
 		elseif absorbspells[spellid].cap then
@@ -555,24 +431,14 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 		for spellid, sources in pairs(shields[dstName]) do
 			for srcName, spell in pairs(sources) do
 				if spell.ts > timestamp then
-					-- Light Essence vs Fire Damage
-					if spellid == 65686 and band(spellschool, 0x04) == spellschool then
+					local _, shieldSchool = IsAbsorbSpell(spellid)
+					if shieldSchool and band(shieldSchool, spellschool) ~= shieldSchool then
+						-- wrong school type
+					elseif spellid == 65686 and band(spellschool, 0x04) == spellschool then
 						return -- don't record
 					-- Dark Essence vs Shadow Damage
 					elseif spellid == 65684 and band(spellschool, 0x20) == spellschool then
 						return -- don't record
-					-- Frost Ward vs Frost Damage
-					elseif mage_frost_ward[spellid] and band(spellschool, 0x10) ~= spellschool then
-						-- nothing
-					-- Fire Ward vs Fire Damage
-					elseif mage_fire_ward[spellid] and band(spellschool, 0x04) ~= spellschool then
-						-- nothing
-					-- Shadow Ward vs Shadow Damage
-					elseif warlock_shadow_ward[spellid] and band(spellschool, 0x20) ~= spellschool then
-						-- nothing
-					-- Anti-Magic, Spell Deflection, Savage Defense
-					elseif (spellid == 48707 or spellid == 49497 or spellid == 62606) and band(spellschool, 0x01) == spellschool then
-						-- nothing
 					else
 						local shield = new()
 						shield.srcGUID = spell.srcGUID
@@ -658,7 +524,6 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 			-- we store the previous shield to use later in case of
 			-- any missing abosrb amount that wasn't properly added.
 			pshield = s
-
 			-- if the amount can be handled by the shield itself, we just
 			-- attribute it and break, no need to check for more.
 			if s.amount >= absorbed then
@@ -1026,9 +891,21 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 			if not UnitIsDeadOrGhost(unit) then
 				local dstName, dstGUID = UnitName(unit), UnitGUID(unit)
 				for i = 1, 40 do
-					local _, _, _, _, _, _, expires, unitCaster, _, _, spellid = UnitBuff(unit, i)
+					local _, _, _, _, _, duration, expires, unitCaster, _, _, spellid = UnitBuff(unit, i)
 					if spellid then
-						if absorbspells[spellid] and unitCaster then
+						if IsAbsorbSpell(spellid) and unitCaster then
+							if not absorbspells[spellid] then
+								absorbspells[spellid] = {}
+							end
+
+							if absorbspells[spellid].dur then
+								if duration > absorbspells[spellid].dur then
+									absorbspells[spellid].dur = duration
+								end
+							else
+								absorbspells[spellid].dur = duration
+							end
+
 							HandleShield(timestamp + expires - curtime, nil, UnitGUID(unitCaster), UnitName(unitCaster), nil, dstGUID, dstName, nil, spellid)
 						end
 					else
@@ -1056,9 +933,6 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 		end
 
 		function mod:OnInitialize()
-			-- nothing to do for Project Ascension
-			if Skada.Ascension then return end
-
 			-- some effects aren't shields but rather special effects, such us talents.
 			-- in order to track them, we simply add them as fake shields before all.
 			-- I don't know the whole list of effects but, if you want to add yours
@@ -1082,9 +956,20 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 				if not UnitIsDeadOrGhost(unit) then
 					local dstName, dstGUID = UnitName(unit), UnitGUID(unit)
 					for i = 1, 40 do
-						local _, _, _, _, _, _, expires, unitCaster, _, _, spellid = UnitBuff(unit, i)
+						local _, _, _, _, _, duration, expires, unitCaster, _, _, spellid = UnitBuff(unit, i)
 						if spellid then
-							if absorbspells[spellid] and unitCaster then
+							if IsAbsorbSpell(spellid) and unitCaster then
+								if not absorbspells[spellid] then
+									absorbspells[spellid] = {}
+								end
+	
+								if absorbspells[spellid].dur then
+									if duration > absorbspells[spellid].dur then
+										absorbspells[spellid].dur = duration
+									end
+								else
+									absorbspells[spellid].dur = duration
+								end
 								HandleShield(timestamp + expires - curtime, nil, UnitGUID(unitCaster), UnitName(unitCaster), nil, dstGUID, dstName, nil, spellid)
 							end
 						else
@@ -1093,7 +978,7 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 					end
 
 					-- passive shields (not for pets)
-					if owner == nil then
+					if owner == nil and not Skada.Ascension then
 						local _, class = UnitClass(unit)
 						if passive[class] then
 							for i = 1, #passive[class] do

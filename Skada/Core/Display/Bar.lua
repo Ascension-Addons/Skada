@@ -24,6 +24,7 @@ local _
 local spellschools = nil
 local classcolors = nil
 local classcoords = nil
+local npccoords = nil
 local rolecoords = nil
 local speccoords = nil
 local windows = nil
@@ -539,7 +540,7 @@ do
 			win:RightClick(bar, button)
 		elseif button == "LeftButton" and win.metadata.click2 and IsShiftKeyDown() then
 			showmode(win, id, label, win.metadata.click2)
-		elseif button == "LeftButton" and (not Skada.Ascension or Skada.AscensionCoA) and win.metadata.click4 and IsAltKeyDown() then
+		elseif button == "LeftButton" and win.metadata.click4 and IsAltKeyDown() then
 			showmode(win, id, label, win.metadata.click4)
 		elseif button == "LeftButton" and win.metadata.click3 and IsControlKeyDown() then
 			showmode(win, id, label, win.metadata.click3)
@@ -646,6 +647,9 @@ do
 			bar:ShowIcon()
 		elseif db.classicons and data.class and classcoords[data.class] and data.icon == nil then
 			bar:SetIcon(Skada.classicons, classcoords(data.class))
+			bar:ShowIcon()
+		elseif db.classicons and data.class and npccoords[data.class] and data.icon == nil then
+			bar:SetIcon(Skada.npcicons, npccoords(data.class))
 			bar:ShowIcon()
 		elseif data.icon and not data.ignore and not data.spellid and not data.hyperlink then
 			bar:SetIcon(data.icon)
@@ -2492,6 +2496,7 @@ do
 			spellschools = Skada.spellschools
 			classcolors = Skada.classcolors
 			classcoords = Skada.classcoords
+			npccoords = Skada.npccoords
 			rolecoords = Skada.rolecoords
 			speccoords = Skada.speccoords
 		end

@@ -138,7 +138,7 @@ Skada.defaults = {
 			["Themes"] = true,
 			["Useful Damage"] = true
 		},
-		windows = {windefaultscopy}
+		windows = {windefaultscopy},
 	}
 }
 

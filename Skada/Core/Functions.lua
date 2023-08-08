@@ -70,30 +70,17 @@ function Skada:RegisterClasses()
 	end})
 
 	-- set classes icon file & Skada custom classes.
-	if self.AscensionCoA then
-		self.classicons = [[Interface\AddOns\Skada\Media\Textures\icon-classes-coa]]
-
-		-- custom class coordinates
-		if not self.classcoords.BOSS then
-			self.classcoords.BOSS = {0, 0.125, 0.875, 1}
-			self.classcoords.MONSTER = {0.125, 0.25, 0.875, 1}
-			self.classcoords.ENEMY = {0.25, 0.375, 0.875, 1}
-			self.classcoords.PET = {0.375, 0.5, 0.875, 1}
-			self.classcoords.UNKNOWN = {0.5, 0.625, 0.875, 1}
-			self.classcoords.PLAYER = {0.625, 0.75, 0.875, 1}
-		end
-	else
-		self.classicons = [[Interface\AddOns\Skada\Media\Textures\icon-classes]]
-
-		-- custom class coordinates
-		if not self.classcoords.BOSS then
-			self.classcoords.BOSS = {0.5, 0.75, 0.5, 0.75}
-			self.classcoords.MONSTER = {0.75, 1, 0.5, 0.75}
-			self.classcoords.ENEMY = {0, 0.25, 0.75, 1}
-			self.classcoords.PET = {0.25, 0.5, 0.75, 1}
-			self.classcoords.PLAYER = {0.75, 1, 0.75, 1}
-			self.classcoords.UNKNOWN = {0.5, 0.75, 0.75, 1}
-		end
+	self.classicons = [[Interface\GLUES\CHARACTERCREATE\UI-CHARACTERCREATE-CLASSES]]
+	self.npcicons = [[Interface\AddOns\Skada\Media\icon-classes-coa]]
+	-- custom class coordinates
+	if not self.npccoords then
+		self.npccoords = {}
+		self.npccoords.BOSS = {0, 0.125, 0.875, 1}
+		self.npccoords.MONSTER = {0.125, 0.25, 0.875, 1}
+		self.npccoords.ENEMY = {0.25, 0.375, 0.875, 1}
+		self.npccoords.PET = {0.375, 0.5, 0.875, 1}
+		self.npccoords.UNKNOWN = {0.5, 0.625, 0.875, 1}
+		self.npccoords.PLAYER = {0.625, 0.75, 0.875, 1}
 	end
 
 	-- common metatable for coordinates tables.
@@ -104,6 +91,7 @@ function Skada:RegisterClasses()
 		return 0, 1, 0, 1
 	end}
 	setmetatable(self.classcoords, coords_mt)
+	setmetatable(self.npccoords, coords_mt)
 
 	-- we ignore roles & specs on Project Ascension since players
 	-- have a custom module to set their own colors & icons.

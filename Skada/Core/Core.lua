@@ -1344,7 +1344,7 @@ do
 				if mode.metadata.click3 then
 					ScanForColumns(mode.metadata.click3)
 				end
-				if (not Skada.Ascension or Skada.AscensionCoA) and mode.metadata.click4 then
+				if mode.metadata.click4 then
 					ScanForColumns(mode.metadata.click4)
 				end
 			end
@@ -2073,9 +2073,9 @@ do
 				t:ClearLines()
 				self:AddSubviewToTooltip(t, win, FindMode(id), id, label)
 				t:Show()
-			elseif md.click1 or md.click2 or md.click3 or ((not self.Ascension or self.AscensionCoA) and md.click4) or md.tooltip then
+			elseif md.click1 or md.click2 or md.click3 or md.click4 or md.tooltip then
 				t:ClearLines()
-				local hasClick = md.click1 or md.click2 or md.click3 or ((not self.Ascension or self.AscensionCoA) and md.click4) or nil
+				local hasClick = md.click1 or md.click2 or md.click3 or md.click4 or nil
 
 				if md.tooltip then
 					local numLines = t:NumLines()
@@ -2096,7 +2096,7 @@ do
 					if md.click3 and not self:NoTotalClick(win.selectedset, md.click3) then
 						self:AddSubviewToTooltip(t, win, md.click3, id, label)
 					end
-					if (not self.Ascension or self.AscensionCoA) and md.click4 and not self:NoTotalClick(win.selectedset, md.click4) then
+					if md.click4 and not self:NoTotalClick(win.selectedset, md.click4) then
 						self:AddSubviewToTooltip(t, win, md.click4, id, label)
 					end
 				end
@@ -2129,9 +2129,9 @@ do
 						t:AddLine(format(L["Control-Click for \124cff00ff00%s\124r"], md.click3_label or md.click3.localeName))
 					end
 
-					if (not self.Ascension or self.AscensionCoA) and type(md.click4) == "function" then
+					if type(md.click4) == "function" then
 						t:AddLine(format(L["Alt-Click for \124cff00ff00%s\124r"], md.click4_label or L["Unknown"]))
-					elseif (not self.Ascension or self.AscensionCoA) and md.click4 and not self:NoTotalClick(win.selectedset, md.click4) then
+					elseif md.click4 and not self:NoTotalClick(win.selectedset, md.click4) then
 						t:AddLine(format(L["Alt-Click for \124cff00ff00%s\124r"], md.click4_label or md.click4.localeName))
 					end
 				end

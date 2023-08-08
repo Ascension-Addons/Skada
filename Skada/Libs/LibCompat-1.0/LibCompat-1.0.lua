@@ -541,7 +541,7 @@ do
 
 	-- flags for Projects Ascension
 	lib.Ascension = AtlasInfo ~= nil
-	lib.AscensionCoA = lib.Ascension and C_Realm:IsConquestOfAzeroth()
+	lib.AscensionCoA = lib.Ascension and IsCustomClass()
 
 	local function GetClassColorsTable()
 		-- fill class colors table.
@@ -549,7 +549,6 @@ do
 			classColorsTable = {}
 			for class, tbl in pairs(CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS) do
 				classColorsTable[class] = tbl
-				classColorsTable[class].colorStr = RGBPercToHex(tbl.r, tbl.g, tbl.b, true)
 				classColorsTable[class].className = LOCALIZED_CLASS_NAMES_MALE[class] or UNKNOWN
 			end
 		end
@@ -557,19 +556,6 @@ do
 		-- fill class coords table
 		if classCoordsTable == nil then
 			classCoordsTable = {}
-			if lib.AscensionCoA then -- for Project Ascension!
-				-- original wow classes
-				classCoordsTable.WARRIOR = {0.25, 0.375, 0.5, 0.625}
-				classCoordsTable.MAGE = {0.375, 0.5, 0.5, 0.625}
-				classCoordsTable.ROGUE = {0, 0.125, 0.625, 0.75}
-				classCoordsTable.DRUID = {0.125, 0.25, 0.625, 0.75}
-				classCoordsTable.HUNTER = {0.25, 0.375, 0.625, 0.75}
-				classCoordsTable.SHAMAN = {0.375, 0.5, 0.625, 0.75}
-				classCoordsTable.PRIEST = {0, 0.125, 0.75, 0.875}
-				classCoordsTable.WARLOCK = {0.125, 0.25, 0.75, 0.875}
-				classCoordsTable.PALADIN = {0.25, 0.375, 0.75, 0.875}
-				classCoordsTable.DEATHKNIGHT = {0.375, 0.5, 0.75, 0.875}
-			end
 			for class, coords in pairs(CLASS_ICON_TCOORDS) do
 				-- skip original classes for Ascension CoA
 				if not classCoordsTable[class] then
