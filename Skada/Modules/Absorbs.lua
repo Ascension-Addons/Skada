@@ -26,7 +26,7 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 	local UnitName, UnitExists, UnitBuff = UnitName, UnitExists, UnitBuff
 	local UnitIsDeadOrGhost, UnitHealthInfo = UnitIsDeadOrGhost, Skada.UnitHealthInfo
 	local IsActiveBattlefieldArena, UnitInBattleground = IsActiveBattlefieldArena, UnitInBattleground
-	local GetTime, band, tsort = GetTime, bit.band, table.sort
+	local GetTime, band, tsort, bcontains = GetTime, bit.band, table.sort, bit.contains
 	local IsAbsorbSpell, GetSpellBaseDuration = IsAbsorbSpell, GetSpellBaseDuration
 	local T = Skada.Table
 
@@ -317,9 +317,13 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 
 		if not spellid or not dstName or ignoredSpells[spellid] then return end
 
-		if not absorbspells[spellid] and IsAbsorbSpell(spellid) then
-			absorbspells[spellid] = { dur = GetSpellBaseDuration(spellID) or 18 }
-			return
+		if not absorbspells[spellid] then
+			if IsAbsorbSpell(spellid) then
+				local duration = GetSpellBaseDuration(spellid)
+				absorbspells[spellid] = { dur = (duration and duration / 1000) or 18 }
+			else
+				return
+			end
 		end
 
 		shields = shields or T.get("Skada_Shields") -- create table if missing
@@ -432,12 +436,12 @@ Skada:RegisterModule("Absorbs", function(L, P, _, _, new, del)
 			for srcName, spell in pairs(sources) do
 				if spell.ts > timestamp then
 					local _, shieldSchool = IsAbsorbSpell(spellid)
-					if shieldSchool and band(shieldSchool, spellschool) ~= shieldSchool then
+					if shieldSchool and not bcontains(shieldSchool, spellschool) then
 						-- wrong school type
-					elseif spellid == 65686 and band(spellschool, 0x04) == spellschool then
+					elseif spellid == 65686 and bcontains(spellschool, 0x04) then
 						return -- don't record
 					-- Dark Essence vs Shadow Damage
-					elseif spellid == 65684 and band(spellschool, 0x20) == spellschool then
+					elseif spellid == 65684 and bcontains(spellschool, 0x20) then
 						return -- don't record
 					else
 						local shield = new()
