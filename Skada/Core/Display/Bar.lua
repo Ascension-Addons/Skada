@@ -1265,7 +1265,7 @@ function mod:AddDisplayOptions(win, options)
 						desc = L["Use class icons where applicable."],
 						order = 120,
 						disabled = function()
-							return (db.specicons or db.roleicons)
+							return (db.specicons or not Skada.Ascension and db.roleicons)
 						end
 					},
 					roleicons = {
