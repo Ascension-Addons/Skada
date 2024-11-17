@@ -2664,8 +2664,14 @@ function Skada:CanReset()
 		return true
 	end
 
-	for i = 1, #self.char.sets do
-		local set = self.char.sets[i]
+	local sets = self.char and self.char.sets
+
+	if not sets then
+		return true
+	end
+
+	for i = 1, #sets do
+		local set = sets[i]
 		if set and not set.keep then
 			return true
 		end
